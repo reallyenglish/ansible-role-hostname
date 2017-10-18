@@ -35,7 +35,7 @@ None
     fqdn: fqdn.example.org
     fqdn_short: "{{ fqdn.split('.') | first }}"
     hostname_fqdn: "{{ fqdn }}"
-    hosts_extra_localhost:
+    hosts_extra_localhosts:
       - "{{ fqdn }}"
       - "{{ fqdn_short }}"
 ```
