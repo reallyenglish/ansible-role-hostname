@@ -3,17 +3,12 @@
 
 - include_vars: "{{ ansible_os_family }}.yml"
 
-- name: Fail when hostname_fqdn is not defined
-  fail:
-    msg: hostname_fqdn must not be empty
-  when:
-    - not hostname_fqdn is defined
-
-- name: Fail when hostname_fqdn is empty
-  fail:
-    msg: hostname_fqdn must not be empty
-  when:
-    - hostname_fqdn | length < 1
+- name: Assert hostname_fqdn is defined and NOT empty
+  assert:
+    msg: hostname_fqdn must be defined and NOT empty
+    that:
+      - hostname_fqdn is defined
+      - hostname_fqdn != ""
     
 # XXX replace `include` with `include_task` after all platforms have recent
 # version of ansible
@@ -29,8 +24,8 @@
   when:
     - ansible_fqdn != hostname_fqdn
 
-- name: Fail if ansible_fqdn has not been updated
-  fail:
-    msg: "ansible_fqdn (`{{ ansible_fqdn }}`) is not identical with `{{ hostname_fqdn }}`"
-  when:
-    - ansible_fqdn != hostname_fqdn
+- name: Assert ansible_fqdn has been updated to hostname_fqdn
+  assert:
+    msg: "ansible_fqdn (`{{ ansible_fqdn }}`) is not identical with `{{ hostname_fqdn }}` after executing the role. this should not happen and probably is a bug in the role"
+    that:
+      - ansible_fqdn == hostname_fqdn
