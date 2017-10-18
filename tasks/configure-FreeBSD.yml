@@ -1,0 +1,8 @@
+---
+
+- name: Update hostname in rc.conf(5)
+  lineinfile:
+    dest: /etc/rc.conf
+    line: "hostname=\"{{ hostname_fqdn }}\""
+    state: present
+    validate: sh -n %s

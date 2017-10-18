@@ -3,35 +3,34 @@
 
 - include_vars: "{{ ansible_os_family }}.yml"
 
-- include: "install-{{ ansible_os_family }}.yml"
+- name: Fail when hostname_fqdn is not defined
+  fail:
+    msg: hostname_fqdn must not be empty
+  when:
+    - not hostname_fqdn is defined
 
-- name: Create log directory
-  file:
-    path: "{{ hostname_log_dir }}"
-    mode: 0755
-    owner: "{{ hostname_user }}"
-    group: "{{ hostname_group }}"
-    state: directory
-  notify: Restart hostname
+- name: Fail when hostname_fqdn is empty
+  fail:
+    msg: hostname_fqdn must not be empty
+  when:
+    - hostname_fqdn | length < 1
+    
+# XXX replace `include` with `include_task` after all platforms have recent
+# version of ansible
+- include: "configure-{{ ansible_os_family }}.yml"
 
-- name: Create db directory
-  file:
-    path: "{{ hostname_db_dir }}"
-    mode: 0755
-    owner: "{{ hostname_user }}"
-    group: "{{ hostname_group }}"
-    state: directory
-  notify: Restart hostname
+- name: Set hostname by hostname(1)
+  command: "hostname {% if ansible_os_family == 'Debian' %}{{ hostname_fqdn.split('.') | first }}{% else %}{{ hostname_fqdn }}{% endif %}"
+  when:
+    - ansible_fqdn != hostname_fqdn
 
-- name: Create hostname.conf
-  template:
-    src: hostname.conf.j2
-    dest: "{{ hostname_conf_file }}"
-    validate: echo %s
-  notify: Restart hostname
+- name: Load facts again
+  setup:
+  when:
+    - ansible_fqdn != hostname_fqdn
 
-- name: Start hostname
-  service:
-    name: "{{ hostname_service }}"
-    enabled: true
-    state: started
+- name: Fail if ansible_fqdn has not been updated
+  fail:
+    msg: "ansible_fqdn (`{{ ansible_fqdn }}`) is not identical with `{{ hostname_fqdn }}`"
+  when:
+    - ansible_fqdn != hostname_fqdn
